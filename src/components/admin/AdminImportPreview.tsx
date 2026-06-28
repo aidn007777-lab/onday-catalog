@@ -5,25 +5,70 @@ import { demoSuppliers } from "@/data/demoCatalog";
 import { formatAdminPrice } from "./adminUtils";
 import { parseWhatsappPriceList } from "./demoWhatsappParser";
 
-const samplePriceList = `iPhone 15 128 Black 389000
-iphone 15 128GB Black - 389.000
-iPhone 17 Pro 256 orange - 635.000
-Samsung S24 256 Gray 429000
+const samplePriceList = `*MOBILAGID.KZ*
+*Оптовый прайс для партнеров*
+———————————————
+*Товар в наличии*
+🔳 Samsung Tab A11 4G 64gb EAC/KCT -56.000 silver, gray
+🔘 Y04s (6/256)-69.500 gold, green
+▪️ X9d 5G (8/256)-150.000 red
+iPhone 17 Pro 256 orange/silver/blue - 635.000
+Samsung A57 256 black, white, gray - 185.000
+iPhone 15 128 Black 389000
 Samsung Galaxy S24 256gb Gray - 429000
-Poco X6 Pro 256 White цена уточняется
-Redmi Note 14 8/256 black - 92000
-Tab A11 4G 128gb silver - 67000`;
+Poco X6 Pro 256 White цена уточняется`;
 
 export function AdminImportPreview() {
   const [supplierId, setSupplierId] = useState(demoSuppliers[0].id);
   const [rawText, setRawText] = useState(samplePriceList);
   const [checked, setChecked] = useState(false);
+  const [copyNotice, setCopyNotice] = useState("");
 
   const selectedSupplier = demoSuppliers.find((supplier) => supplier.id === supplierId) ?? demoSuppliers[0];
   const parseResult = useMemo(
     () => (checked ? parseWhatsappPriceList(rawText, selectedSupplier.name) : null),
     [checked, rawText, selectedSupplier.name]
   );
+
+  async function handleCopyResult() {
+    if (!parseResult || parseResult.rows.length === 0) {
+      return;
+    }
+
+    const headers = [
+      "Категория",
+      "Статус",
+      "Бренд",
+      "Модель",
+      "Память",
+      "Цвет",
+      "SIM/EAC",
+      "Цена",
+      "Поставщик",
+      "Исходная строка"
+    ];
+    const rows = parseResult.rows.map((row) =>
+      [
+        row.category,
+        row.status,
+        row.brand,
+        row.model,
+        row.memory,
+        row.color,
+        row.simEac,
+        formatAdminPrice(row.price),
+        row.supplier,
+        row.originalLine
+      ].join("\t")
+    );
+
+    try {
+      await navigator.clipboard.writeText([headers.join("\t"), ...rows].join("\n"));
+      setCopyNotice("Распознанный результат скопирован в буфер обмена");
+    } catch {
+      setCopyNotice("Не удалось скопировать результат. Проверьте разрешения браузера.");
+    }
+  }
 
   return (
     <div className="admin-stack">
@@ -38,7 +83,13 @@ export function AdminImportPreview() {
         <div className="admin-form">
           <label className="admin-field">
             <span>Поставщик</span>
-            <select value={supplierId} onChange={(event) => setSupplierId(event.target.value)}>
+            <select
+              value={supplierId}
+              onChange={(event) => {
+                setSupplierId(event.target.value);
+                setCopyNotice("");
+              }}
+            >
               {demoSuppliers.map((supplier) => (
                 <option key={supplier.id} value={supplier.id}>
                   {supplier.name}
@@ -54,11 +105,19 @@ export function AdminImportPreview() {
               onChange={(event) => {
                 setRawText(event.target.value);
                 setChecked(false);
+                setCopyNotice("");
               }}
             />
           </label>
 
-          <button className="primary-button admin-submit" type="button" onClick={() => setChecked(true)}>
+          <button
+            className="primary-button admin-submit"
+            type="button"
+            onClick={() => {
+              setChecked(true);
+              setCopyNotice("");
+            }}
+          >
             Проверить
           </button>
 
@@ -68,10 +127,19 @@ export function AdminImportPreview() {
             onClick={() => {
               setRawText("");
               setChecked(false);
+              setCopyNotice("");
             }}
           >
             Очистить
           </button>
+
+          {parseResult && parseResult.rows.length > 0 ? (
+            <button className="ghost-button admin-submit" type="button" onClick={handleCopyResult}>
+              Скопировать распознанный результат
+            </button>
+          ) : null}
+
+          {copyNotice ? <div className="admin-notice">{copyNotice}</div> : null}
         </div>
       </section>
 
@@ -99,10 +167,12 @@ export function AdminImportPreview() {
                 <tr>
                   <th>№</th>
                   <th>Статус распознавания</th>
+                  <th>Категория</th>
                   <th>Бренд</th>
                   <th>Модель</th>
                   <th>Память</th>
                   <th>Цвет</th>
+                  <th>SIM/EAC</th>
                   <th>Цена</th>
                   <th>Поставщик</th>
                   <th>Исходная строка</th>
@@ -117,10 +187,12 @@ export function AdminImportPreview() {
                         {row.status}
                       </span>
                     </td>
+                    <td>{row.category}</td>
                     <td>{row.brand}</td>
                     <td>{row.model}</td>
                     <td>{row.memory}</td>
                     <td>{row.color}</td>
+                    <td>{row.simEac}</td>
                     <td>{formatAdminPrice(row.price)}</td>
                     <td>{row.supplier}</td>
                     <td>{row.originalLine}</td>
@@ -140,8 +212,8 @@ export function AdminImportPreview() {
         <section className="surface admin-errors-surface">
           <div className="panel-header">
             <div>
-              <h2 className="panel-title">Ошибки распознавания</h2>
-              <p className="panel-subtitle">Эти строки требуют ручной проверки</p>
+              <h2 className="panel-title">Нераспознанные строки</h2>
+              <p className="panel-subtitle">Заголовки, разделители и строки, которым нужна ручная проверка</p>
             </div>
           </div>
 
