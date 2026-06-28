@@ -841,7 +841,7 @@ button {
 
 .admin-metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -1019,6 +1019,38 @@ button {
 .admin-submit {
   justify-self: start;
   min-width: 180px;
+}
+
+.import-preview-table {
+  min-width: 1280px;
+}
+
+.admin-errors-surface {
+  overflow: hidden;
+}
+
+.admin-errors-list {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.admin-error-row {
+  border: 1px solid color-mix(in srgb, var(--danger) 44%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--danger) 10%, var(--panel-strong));
+  padding: 13px;
+}
+
+.admin-error-row strong {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.admin-error-row p {
+  margin: 7px 0 0;
+  color: var(--text);
+  font-size: 14px;
 }
 
 .admin-empty-state {
