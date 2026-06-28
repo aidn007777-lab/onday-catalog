@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CatalogFilters } from "@/components/catalog/CatalogFilters";
 import { CatalogTable } from "@/components/catalog/CatalogTable";
@@ -62,11 +63,12 @@ export function AppShell() {
     demoProducts[0];
 
   const sidebarItems = [
-    t.catalog,
-    t.orders,
-    t.imports,
-    t.suppliers,
-    t.settings
+    { label: t.catalog, href: "/" },
+    { label: t.admin, href: "/admin" },
+    { label: t.orders, href: "#" },
+    { label: t.imports, href: "#" },
+    { label: t.suppliers, href: "#" },
+    { label: t.settings, href: "#" }
   ];
 
   const logoSrc = theme === "dark" ? "/brand/onday-logo-white.png" : "/brand/onday-logo-black.png";
@@ -98,10 +100,10 @@ export function AppShell() {
 
         <nav className="sidebar-nav" aria-label="Navigation">
           {sidebarItems.map((item, index) => (
-            <a className={`nav-item ${index === 0 ? "is-active" : ""}`} href="#" key={item}>
-              <span>{item}</span>
+            <Link className={`nav-item ${index === 0 ? "is-active" : ""}`} href={item.href} key={item.label}>
+              <span>{item.label}</span>
               {index === 0 ? <span className="nav-mark" aria-hidden="true" /> : null}
-            </a>
+            </Link>
           ))}
         </nav>
 

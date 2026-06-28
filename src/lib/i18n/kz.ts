@@ -2,6 +2,7 @@ export const kz = {
   all: "Барлығы",
   appTitle: "ONDAY Catalog",
   activeOrder: "Белсенді тапсырыс бар",
+  admin: "Әкімдік",
   bankOffers: "Бөліп төлеу",
   brand: "Бренд",
   cards: "Карточкалар",

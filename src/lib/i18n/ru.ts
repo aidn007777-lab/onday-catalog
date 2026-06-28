@@ -2,6 +2,7 @@ export const ru = {
   all: "Все",
   appTitle: "ONDAY Catalog",
   activeOrder: "Есть активный заказ",
+  admin: "Админка",
   bankOffers: "Рассрочка",
   brand: "Бренд",
   cards: "Карточки",

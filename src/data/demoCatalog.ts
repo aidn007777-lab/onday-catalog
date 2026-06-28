@@ -1,4 +1,4 @@
-import type { Product, Warehouse } from "@/types/catalog";
+import type { AdminProduct, DemoSupplier, Product, Warehouse } from "@/types/catalog";
 
 export const demoWarehouses: Warehouse[] = [
   {
@@ -120,3 +120,62 @@ export const demoProducts: Product[] = [
     hasActiveOrder: false
   }
 ];
+
+export const demoSuppliers: DemoSupplier[] = [
+  {
+    id: "darkhan",
+    name: "Дархан",
+    publicWarehouse: "Тараз — склад 1",
+    priority: 1,
+    status: "active"
+  },
+  {
+    id: "talisman",
+    name: "Талисман",
+    publicWarehouse: "Тараз — склад 1",
+    priority: 2,
+    status: "active"
+  },
+  {
+    id: "mobilagid",
+    name: "Mobilagid",
+    publicWarehouse: "Алматы — склад 1",
+    priority: 3,
+    status: "active"
+  },
+  {
+    id: "almaty",
+    name: "Алматы",
+    publicWarehouse: "Алматы — склад 1",
+    priority: 4,
+    status: "planned"
+  }
+];
+
+const demoAdminProductMeta: Record<string, Pick<AdminProduct, "supplierName" | "purchasePrice">> = {
+  "apple-iphone-15-128-black": {
+    supplierName: "Дархан",
+    purchasePrice: 351000
+  },
+  "samsung-s24-256-gray": {
+    supplierName: "Талисман",
+    purchasePrice: 388000
+  },
+  "xiaomi-14t-512-blue": {
+    supplierName: "Дархан",
+    purchasePrice: 286000
+  },
+  "poco-x6-256-white": {
+    supplierName: "Mobilagid",
+    purchasePrice: 164000
+  },
+  "realme-12-128-green": {
+    supplierName: "Алматы",
+    purchasePrice: 176000
+  }
+};
+
+export const demoAdminProducts: AdminProduct[] = demoProducts.map((product) => ({
+  ...product,
+  ...demoAdminProductMeta[product.id]
+}));

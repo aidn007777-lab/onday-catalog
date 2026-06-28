@@ -43,3 +43,16 @@ export interface Product {
   status: ProductStatus;
   hasActiveOrder: boolean;
 }
+
+export interface DemoSupplier {
+  id: string;
+  name: string;
+  publicWarehouse: string;
+  priority: number;
+  status: "active" | "planned";
+}
+
+export interface AdminProduct extends Product {
+  supplierName: string;
+  purchasePrice: number;
+}
