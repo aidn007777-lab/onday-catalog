@@ -134,6 +134,7 @@ export function AdminProductsTable() {
                 <th>Цвет</th>
                 <th>SIM/EAC</th>
                 <th>Цена прихода</th>
+                <th>Цена продажи</th>
                 <th>Статус</th>
                 <th>Дата обновления</th>
               </tr>
@@ -149,6 +150,7 @@ export function AdminProductsTable() {
                   <td>{product.colorRu}</td>
                   <td>{getProductSimEac(product)}</td>
                   <td>{formatAdminPrice(product.purchasePrice)}</td>
+                  <td>{formatAdminPrice(product.salePrice)}</td>
                   <td>
                     <span className={`admin-status ${product.status === "available" ? "is-ok" : "is-warning"}`}>
                       {statusLabels[product.status]}

@@ -935,6 +935,16 @@ button {
   font-size: 13px;
 }
 
+.admin-table-input {
+  width: 120px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  color: var(--text);
+  outline: none;
+  padding: 9px 10px;
+}
+
 .admin-status {
   display: inline-flex;
   min-height: 26px;
@@ -1029,7 +1039,7 @@ button {
 }
 
 .import-preview-table {
-  min-width: 1560px;
+  min-width: 1700px;
 }
 
 .admin-errors-surface {

@@ -53,8 +53,8 @@ export function ProductCards({ t, locale, products, warehouses, selectedProductI
 
             <span className="muted">{getWarehouseLabel(product.warehouseId, warehouses, locale)}</span>
 
-            <span className={`price ${product.cashPrice === null ? "is-pending" : ""}`}>
-              {formatPrice(product.cashPrice, t)}
+            <span className={`price ${product.salePrice == null ? "is-pending" : ""}`}>
+              {formatPrice(product.salePrice ?? null, t)}
             </span>
           </button>
         ))}

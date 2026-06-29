@@ -39,6 +39,7 @@ export interface Product {
   colorKz: string;
   warehouseId: string;
   cashPrice: number | null;
+  salePrice?: number | null;
   bankPrices: Partial<Record<BankCode, number>>;
   updatedAt: string;
   status: ProductStatus;
@@ -56,4 +57,5 @@ export interface DemoSupplier {
 export interface AdminProduct extends Product {
   supplierName: string;
   purchasePrice: number | null;
+  salePrice: number | null;
 }

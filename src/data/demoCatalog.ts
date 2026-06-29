@@ -177,5 +177,6 @@ const demoAdminProductMeta: Record<string, Pick<AdminProduct, "supplierName" | "
 
 export const demoAdminProducts: AdminProduct[] = demoProducts.map((product) => ({
   ...product,
+  salePrice: product.cashPrice,
   ...demoAdminProductMeta[product.id]
 }));

@@ -62,8 +62,8 @@ export function CatalogTable({ t, locale, products, warehouses, selectedProductI
               <td>{getWarehouseLabel(product.warehouseId, warehouses, locale)}</td>
               <td>{getStatusLabel(product.status, t)}</td>
               <td>
-                <span className={`price ${product.cashPrice === null ? "is-pending" : ""}`}>
-                  {formatPrice(product.cashPrice, t)}
+                <span className={`price ${product.salePrice == null ? "is-pending" : ""}`}>
+                  {formatPrice(product.salePrice ?? null, t)}
                 </span>
               </td>
               <td className="muted">{product.updatedAt}</td>

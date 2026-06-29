@@ -50,8 +50,8 @@ export function ProductDetails({
 
       <div className="details-section">
         <p className="section-label">{t.cashPrice}</p>
-        <span className={`price ${product.cashPrice === null ? "is-pending" : ""}`}>
-          {formatPrice(product.cashPrice, t)}
+        <span className={`price ${product.salePrice == null ? "is-pending" : ""}`}>
+          {formatPrice(product.salePrice ?? null, t)}
         </span>
       </div>
 

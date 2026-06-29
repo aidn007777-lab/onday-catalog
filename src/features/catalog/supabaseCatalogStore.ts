@@ -2,15 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { demoSuppliers } from "@/data/demoCatalog";
-import { getSupabaseBrowserClient, getSupabaseConfigError } from "@/lib/supabase/client";
+import {
+  formatSupabaseDiagnostic,
+  getSupabaseBrowserClient,
+  getSupabaseConfigError
+} from "@/lib/supabase/client";
 import type { AdminProduct, CategoryKey, Product, ProductStatus } from "@/types/catalog";
 import type { ParsedPriceLine } from "@/components/admin/demoWhatsappParser";
 
 const CATALOG_UPDATED_EVENT = "onday-supabase-catalog-updated";
 
 const productsSelect =
-  "id,supplier,category,brand,model,memory,color,simType,purchasePrice,status,createdAt,updatedAt";
-const publicProductsSelect = "id,category,brand,model,memory,color,simType,warehouseId,status,createdAt,updatedAt";
+  "id,supplier,category,brand,model,memory,color,simType,purchasePrice,salePrice,status,createdAt,updatedAt";
+const publicProductsSelect = "id,category,brand,model,memory,color,simType,salePrice,warehouseId,status,createdAt,updatedAt";
 
 const categoryByLabel: Record<string, CategoryKey> = {
   Смартфоны: "smartphones",
@@ -61,6 +65,10 @@ export interface CatalogUpsertResult {
   total: number;
 }
 
+type ParsedCatalogImportRow = ParsedPriceLine & {
+  salePrice?: number | null;
+};
+
 interface CatalogQueryState<TProduct> {
   error: string;
   loading: boolean;
@@ -77,6 +85,7 @@ interface SupabaseProductRow {
   color: string;
   simType: string;
   purchasePrice: number | string | null;
+  salePrice: number | string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -90,6 +99,7 @@ interface SupabasePublicProductRow {
   memory: string;
   color: string;
   simType: string;
+  salePrice: number | string | null;
   warehouseId: string;
   status: string;
   createdAt: string;
@@ -120,10 +130,23 @@ export function useSupabaseAdminProducts() {
 
     setState((current) => ({ ...current, error: "", loading: true }));
 
-    const { data, error } = await supabase.from("products").select(productsSelect);
+    let result;
+
+    try {
+      result = await supabase.from("products").select(productsSelect);
+    } catch (error) {
+      setState({ error: formatSupabaseDiagnostic("select products", getErrorMessage(error)), loading: false, products: [] });
+      return;
+    }
+
+    const { data, error } = result;
 
     if (error) {
-      setState({ error: `Не удалось загрузить товары из Supabase: ${error.message}`, loading: false, products: [] });
+      setState({
+        error: formatSupabaseDiagnostic("select products", error.message, getSupabaseErrorDetails(error)),
+        loading: false,
+        products: []
+      });
       return;
     }
 
@@ -166,10 +189,27 @@ export function useSupabasePublicProducts() {
 
     setState((current) => ({ ...current, error: "", loading: true }));
 
-    const { data, error } = await supabase.from("public_catalog_products").select(publicProductsSelect);
+    let result;
+
+    try {
+      result = await supabase.from("public_catalog_products").select(publicProductsSelect);
+    } catch (error) {
+      setState({
+        error: formatSupabaseDiagnostic("select public_catalog_products", getErrorMessage(error)),
+        loading: false,
+        products: []
+      });
+      return;
+    }
+
+    const { data, error } = result;
 
     if (error) {
-      setState({ error: `Не удалось загрузить витрину из Supabase: ${error.message}`, loading: false, products: [] });
+      setState({
+        error: formatSupabaseDiagnostic("select public_catalog_products", error.message, getSupabaseErrorDetails(error)),
+        loading: false,
+        products: []
+      });
       return;
     }
 
@@ -189,7 +229,7 @@ export function useSupabasePublicProducts() {
 }
 
 export async function upsertParsedCatalogRows(
-  rows: ParsedPriceLine[],
+  rows: ParsedCatalogImportRow[],
   supplierName: string
 ): Promise<CatalogUpsertResult> {
   const configError = getSupabaseConfigError();
@@ -216,42 +256,69 @@ export async function upsertParsedCatalogRows(
     }
 
     const product = createSupabaseProductPayload(row, supplierName, now);
-    const { data: existingProduct, error: selectError } = await supabase
-      .from("products")
-      .select("id")
-      .eq("supplier", product.supplier)
-      .eq("model", product.model)
-      .eq("memory", product.memory)
-      .eq("color", product.color)
-      .eq("simType", product.simType)
-      .maybeSingle();
+    let duplicateResult;
+
+    try {
+      duplicateResult = await supabase
+        .from("products")
+        .select("id")
+        .eq("supplier", product.supplier)
+        .eq("model", product.model)
+        .eq("memory", product.memory)
+        .eq("color", product.color)
+        .eq("simType", product.simType)
+        .maybeSingle();
+    } catch (error) {
+      throw new Error(formatSupabaseDiagnostic("select duplicate products", getErrorMessage(error)));
+    }
+
+    const { data: existingProduct, error: selectError } = duplicateResult;
 
     if (selectError) {
-      throw new Error(`Не удалось проверить дубль в Supabase: ${selectError.message}`);
+      throw new Error(
+        formatSupabaseDiagnostic("select duplicate products", selectError.message, getSupabaseErrorDetails(selectError))
+      );
     }
 
     if (existingProduct?.id) {
-      const { error: updateError } = await supabase
-        .from("products")
-        .update({
-          category: product.category,
-          brand: product.brand,
-          purchasePrice: product.purchasePrice,
-          status: product.status,
-          updatedAt: now
-        })
-        .eq("id", existingProduct.id);
+      let updateResult;
+
+      try {
+        updateResult = await supabase
+          .from("products")
+          .update({
+            category: product.category,
+            brand: product.brand,
+            purchasePrice: product.purchasePrice,
+            salePrice: product.salePrice,
+            status: product.status,
+            updatedAt: now
+          })
+          .eq("id", existingProduct.id);
+      } catch (error) {
+        throw new Error(formatSupabaseDiagnostic("update products", getErrorMessage(error)));
+      }
+
+      const { error: updateError } = updateResult;
 
       if (updateError) {
-        throw new Error(`Не удалось обновить товар в Supabase: ${updateError.message}`);
+        throw new Error(formatSupabaseDiagnostic("update products", updateError.message, getSupabaseErrorDetails(updateError)));
       }
 
       updated += 1;
     } else {
-      const { error: insertError } = await supabase.from("products").insert(product);
+      let insertResult;
+
+      try {
+        insertResult = await supabase.from("products").insert(product);
+      } catch (error) {
+        throw new Error(formatSupabaseDiagnostic("insert products", getErrorMessage(error)));
+      }
+
+      const { error: insertError } = insertResult;
 
       if (insertError) {
-        throw new Error(`Не удалось добавить товар в Supabase: ${insertError.message}`);
+        throw new Error(formatSupabaseDiagnostic("insert products", insertError.message, getSupabaseErrorDetails(insertError)));
       }
 
       added += 1;
@@ -306,7 +373,7 @@ function useCatalogRefresh(refresh: () => Promise<void>) {
   }, [refresh]);
 }
 
-function createSupabaseProductPayload(row: ParsedPriceLine, supplierName: string, updatedAt: string) {
+function createSupabaseProductPayload(row: ParsedCatalogImportRow, supplierName: string, updatedAt: string) {
   const simType = normalizeSimEac(row.simEac);
 
   return {
@@ -318,6 +385,7 @@ function createSupabaseProductPayload(row: ParsedPriceLine, supplierName: string
     color: row.color,
     simType,
     purchasePrice: row.price,
+    salePrice: row.salePrice ?? null,
     status: row.price === null ? "pricePending" : "available",
     updatedAt
   };
@@ -338,7 +406,8 @@ function mapSupabaseProductToAdminProduct(row: SupabaseProductRow): AdminProduct
     colorRu: row.color,
     colorKz: colorKzByRu[row.color.toLowerCase()] ?? row.color,
     warehouseId: getWarehouseIdBySupplier(row.supplier),
-    cashPrice: null,
+    cashPrice: normalizePrice(row.salePrice),
+    salePrice: normalizePrice(row.salePrice),
     bankPrices: {},
     updatedAt: formatTimestamp(row.updatedAt),
     status: normalizeStatus(row.status),
@@ -363,7 +432,8 @@ function mapSupabasePublicProductToProduct(row: SupabasePublicProductRow): Produ
     colorRu: row.color,
     colorKz: colorKzByRu[row.color.toLowerCase()] ?? row.color,
     warehouseId: row.warehouseId,
-    cashPrice: null,
+    cashPrice: normalizePrice(row.salePrice),
+    salePrice: normalizePrice(row.salePrice),
     bankPrices: {},
     updatedAt: formatTimestamp(row.updatedAt),
     status: normalizeStatus(row.status),
@@ -441,4 +511,20 @@ function dispatchCatalogUpdated() {
 
 function normalizeValue(value: string) {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return "Неизвестная ошибка";
+}
+
+function getSupabaseErrorDetails(error: { code?: string; details?: string; hint?: string }) {
+  return [error.code ? `code=${error.code}` : "", error.details, error.hint].filter(Boolean).join("; ");
 }

@@ -27,6 +27,7 @@ export function AdminImportPreview() {
   const [catalogNotice, setCatalogNotice] = useState<CatalogUpsertResult | null>(null);
   const [catalogError, setCatalogError] = useState("");
   const [savingCatalog, setSavingCatalog] = useState(false);
+  const [salePrices, setSalePrices] = useState<Record<string, string>>({});
 
   const selectedSupplier = demoSuppliers.find((supplier) => supplier.id === supplierId) ?? demoSuppliers[0];
   const parseResult = useMemo(
@@ -48,6 +49,7 @@ export function AdminImportPreview() {
       "Цвет",
       "SIM/EAC",
       "Цена",
+      "Цена продажи",
       "Поставщик",
       "Исходная строка"
     ];
@@ -61,6 +63,7 @@ export function AdminImportPreview() {
         row.color,
         row.simEac,
         formatAdminPrice(row.price),
+        formatAdminPrice(parseOptionalPrice(salePrices[row.id])),
         row.supplier,
         row.originalLine
       ].join("\t")
@@ -85,7 +88,11 @@ export function AdminImportPreview() {
     setCopyNotice("");
 
     try {
-      const result = await upsertParsedCatalogRows(parseResult.rows, selectedSupplier.name);
+      const rowsWithSalePrice = parseResult.rows.map((row) => ({
+        ...row,
+        salePrice: parseOptionalPrice(salePrices[row.id])
+      }));
+      const result = await upsertParsedCatalogRows(rowsWithSalePrice, selectedSupplier.name);
       setCatalogNotice(result);
     } catch (error) {
       setCatalogError(error instanceof Error ? error.message : "Не удалось сохранить товары в Supabase.");
@@ -114,6 +121,7 @@ export function AdminImportPreview() {
                 setCopyNotice("");
                 setCatalogNotice(null);
                 setCatalogError("");
+                setSalePrices({});
               }}
             >
               {demoSuppliers.map((supplier) => (
@@ -134,6 +142,7 @@ export function AdminImportPreview() {
                 setCopyNotice("");
                 setCatalogNotice(null);
                 setCatalogError("");
+                setSalePrices({});
               }}
             />
           </label>
@@ -146,6 +155,7 @@ export function AdminImportPreview() {
               setCopyNotice("");
               setCatalogNotice(null);
               setCatalogError("");
+              setSalePrices({});
             }}
           >
             Проверить
@@ -160,6 +170,7 @@ export function AdminImportPreview() {
               setCopyNotice("");
               setCatalogNotice(null);
               setCatalogError("");
+              setSalePrices({});
             }}
           >
             Очистить
@@ -224,6 +235,7 @@ export function AdminImportPreview() {
                   <th>Цвет</th>
                   <th>SIM/EAC</th>
                   <th>Цена</th>
+                  <th>Цена продажи</th>
                   <th>Поставщик</th>
                   <th>Исходная строка</th>
                 </tr>
@@ -244,6 +256,20 @@ export function AdminImportPreview() {
                     <td>{row.color}</td>
                     <td>{row.simEac}</td>
                     <td>{formatAdminPrice(row.price)}</td>
+                    <td>
+                      <input
+                        className="admin-table-input"
+                        inputMode="numeric"
+                        placeholder="пусто"
+                        value={salePrices[row.id] ?? ""}
+                        onChange={(event) =>
+                          setSalePrices((current) => ({
+                            ...current,
+                            [row.id]: event.target.value
+                          }))
+                        }
+                      />
+                    </td>
                     <td>{row.supplier}</td>
                     <td>{row.originalLine}</td>
                   </tr>
@@ -279,6 +305,12 @@ export function AdminImportPreview() {
       ) : null}
     </div>
   );
+}
+
+function parseOptionalPrice(value: string | undefined) {
+  const normalized = value?.replace(/[^\d]/g, "") ?? "";
+
+  return normalized ? Number(normalized) : null;
 }
 
 function ImportMetric({ label, value }: { label: string; value: number }) {

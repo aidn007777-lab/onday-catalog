@@ -1,38 +1,5 @@
-create extension if not exists "pgcrypto";
-
-create table if not exists public.products (
-  id uuid primary key default gen_random_uuid(),
-  supplier text not null,
-  category text not null,
-  brand text not null,
-  model text not null,
-  memory text not null,
-  color text not null,
-  "simType" text not null,
-  "purchasePrice" numeric,
-  "salePrice" numeric,
-  status text not null default 'available' check (status in ('available', 'outOfStock', 'pricePending')),
-  "createdAt" timestamp with time zone not null default now(),
-  "updatedAt" timestamp with time zone not null default now(),
-  constraint products_supplier_model_memory_color_sim_type_key unique (supplier, model, memory, color, "simType")
-);
-
-create or replace function public.set_products_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new."updatedAt" = now();
-  return new;
-end;
-$$;
-
-drop trigger if exists products_set_updated_at on public.products;
-
-create trigger products_set_updated_at
-before update on public.products
-for each row
-execute function public.set_products_updated_at();
+alter table public.products
+add column if not exists "salePrice" numeric;
 
 create or replace view public.public_catalog_products as
 select
