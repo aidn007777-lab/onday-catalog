@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/Badge";
+import { getProductSimEac } from "@/features/catalog/demoCatalogStore";
 import type { Locale, Product, Warehouse } from "@/types/catalog";
 import type { Translation } from "@/lib/i18n/translations";
 import { formatPrice, getWarehouseLabel } from "./catalogUtils";
@@ -21,6 +22,8 @@ export function ProductDetails({
   onOrderClick
 }: ProductDetailsProps) {
   const productColor = locale === "ru" ? product.colorRu : product.colorKz;
+  const statusLabel =
+    product.status === "available" ? t.stock : product.status === "outOfStock" ? t.notAvailable : t.pricePending;
 
   return (
     <aside className="surface details-panel" aria-label={t.fullInfo}>
@@ -40,7 +43,7 @@ export function ProductDetails({
         </div>
 
         <div className="badge-row">
-          <Badge tone="lime">{t.stock}</Badge>
+          <Badge tone={product.status === "available" ? "lime" : "default"}>{statusLabel}</Badge>
           {product.hasActiveOrder ? <Badge>{t.activeOrder}</Badge> : null}
         </div>
       </div>
@@ -68,7 +71,7 @@ export function ProductDetails({
           <DetailRow label={t.brand} value={product.brand} />
           <DetailRow label={t.model} value={product.model} />
           <DetailRow label={t.memory} value={product.memory} />
-          <DetailRow label={t.sim} value={product.sim} />
+          <DetailRow label={t.simEac} value={getProductSimEac(product)} />
           <DetailRow label={t.eac} value={product.eac} />
           <DetailRow label={t.color} value={productColor} />
           <DetailRow label={t.publicWarehouse} value={getWarehouseLabel(product.warehouseId, warehouses, locale)} />

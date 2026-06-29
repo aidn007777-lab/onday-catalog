@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/Badge";
+import { getProductSimEac } from "@/features/catalog/demoCatalogStore";
 import type { Locale, Product, Warehouse } from "@/types/catalog";
 import type { Translation } from "@/lib/i18n/translations";
 import { formatPrice, getWarehouseLabel } from "./catalogUtils";
@@ -33,6 +34,7 @@ export function CatalogTable({ t, locale, products, warehouses, selectedProductI
             <th>{t.simEac}</th>
             <th>{t.color}</th>
             <th>{t.publicWarehouse}</th>
+            <th>{t.stock}</th>
             <th>{t.cashPrice}</th>
             <th>{t.updatedAt}</th>
           </tr>
@@ -53,12 +55,12 @@ export function CatalogTable({ t, locale, products, warehouses, selectedProductI
               <td>{product.memory}</td>
               <td>
                 <div className="badge-row">
-                  <Badge>{product.sim}</Badge>
-                  <Badge>{product.eac}</Badge>
+                  <Badge>{getProductSimEac(product)}</Badge>
                 </div>
               </td>
               <td>{locale === "ru" ? product.colorRu : product.colorKz}</td>
               <td>{getWarehouseLabel(product.warehouseId, warehouses, locale)}</td>
+              <td>{getStatusLabel(product.status, t)}</td>
               <td>
                 <span className={`price ${product.cashPrice === null ? "is-pending" : ""}`}>
                   {formatPrice(product.cashPrice, t)}
@@ -71,4 +73,16 @@ export function CatalogTable({ t, locale, products, warehouses, selectedProductI
       </table>
     </div>
   );
+}
+
+function getStatusLabel(status: Product["status"], t: Translation) {
+  if (status === "available") {
+    return t.stock;
+  }
+
+  if (status === "outOfStock") {
+    return t.notAvailable;
+  }
+
+  return t.pricePending;
 }

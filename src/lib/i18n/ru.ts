@@ -23,6 +23,7 @@ export const ru = {
   darkTheme: "Тёмная тема",
   memory: "Память",
   model: "Модель",
+  notAvailable: "Нет в наличии",
   noResults: "Ничего не найдено",
   orderSupplier: "Заказать поставщику",
   orders: "Заказы",

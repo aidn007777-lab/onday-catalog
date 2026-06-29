@@ -23,6 +23,7 @@ export const kz = {
   darkTheme: "Қараңғы тақырып",
   memory: "Жады",
   model: "Модель",
+  notAvailable: "Қоймада жоқ",
   noResults: "Ештеңе табылмады",
   orderSupplier: "Жеткізушіге тапсырыс",
   orders: "Тапсырыстар",

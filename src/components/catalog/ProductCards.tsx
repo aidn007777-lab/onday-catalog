@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/Badge";
+import { getProductSimEac } from "@/features/catalog/demoCatalogStore";
 import type { Locale, Product, Warehouse } from "@/types/catalog";
 import type { Translation } from "@/lib/i18n/translations";
 import { formatPrice, getWarehouseLabel } from "./catalogUtils";
@@ -47,6 +48,7 @@ export function ProductCards({ t, locale, products, warehouses, selectedProductI
             <span className="badge-row">
               <Badge tone="lime">{product.memory}</Badge>
               <Badge>{locale === "ru" ? product.colorRu : product.colorKz}</Badge>
+              <Badge>{getProductSimEac(product)}</Badge>
             </span>
 
             <span className="muted">{getWarehouseLabel(product.warehouseId, warehouses, locale)}</span>

@@ -13,6 +13,7 @@ export const categoryLabels: Record<CategoryKey, string> = {
 
 export const statusLabels: Record<ProductStatus, string> = {
   available: "В наличии",
+  outOfStock: "Нет в наличии",
   pricePending: "Цена уточняется"
 };
 

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { demoSuppliers } from "@/data/demoCatalog";
+import { upsertParsedCatalogRows, type CatalogUpsertResult } from "@/features/catalog/demoCatalogStore";
 import { formatAdminPrice } from "./adminUtils";
 import { parseWhatsappPriceList } from "./demoWhatsappParser";
 
@@ -23,6 +24,7 @@ export function AdminImportPreview() {
   const [rawText, setRawText] = useState(samplePriceList);
   const [checked, setChecked] = useState(false);
   const [copyNotice, setCopyNotice] = useState("");
+  const [catalogNotice, setCatalogNotice] = useState<CatalogUpsertResult | null>(null);
 
   const selectedSupplier = demoSuppliers.find((supplier) => supplier.id === supplierId) ?? demoSuppliers[0];
   const parseResult = useMemo(
@@ -70,6 +72,16 @@ export function AdminImportPreview() {
     }
   }
 
+  function handleAddToCatalog() {
+    if (!parseResult || parseResult.rows.length === 0) {
+      return;
+    }
+
+    const result = upsertParsedCatalogRows(parseResult.rows, selectedSupplier.name);
+    setCatalogNotice(result);
+    setCopyNotice("");
+  }
+
   return (
     <div className="admin-stack">
       <section className="surface admin-form-surface">
@@ -88,6 +100,7 @@ export function AdminImportPreview() {
               onChange={(event) => {
                 setSupplierId(event.target.value);
                 setCopyNotice("");
+                setCatalogNotice(null);
               }}
             >
               {demoSuppliers.map((supplier) => (
@@ -106,6 +119,7 @@ export function AdminImportPreview() {
                 setRawText(event.target.value);
                 setChecked(false);
                 setCopyNotice("");
+                setCatalogNotice(null);
               }}
             />
           </label>
@@ -116,6 +130,7 @@ export function AdminImportPreview() {
             onClick={() => {
               setChecked(true);
               setCopyNotice("");
+              setCatalogNotice(null);
             }}
           >
             Проверить
@@ -128,18 +143,31 @@ export function AdminImportPreview() {
               setRawText("");
               setChecked(false);
               setCopyNotice("");
+              setCatalogNotice(null);
             }}
           >
             Очистить
           </button>
 
           {parseResult && parseResult.rows.length > 0 ? (
-            <button className="ghost-button admin-submit" type="button" onClick={handleCopyResult}>
-              Скопировать распознанный результат
-            </button>
+            <>
+              <button className="primary-button admin-submit" type="button" onClick={handleAddToCatalog}>
+                Добавить в каталог
+              </button>
+
+              <button className="ghost-button admin-submit" type="button" onClick={handleCopyResult}>
+                Скопировать распознанный результат
+              </button>
+            </>
           ) : null}
 
           {copyNotice ? <div className="admin-notice">{copyNotice}</div> : null}
+          {catalogNotice ? (
+            <div className="admin-notice" role="status">
+              Добавлено: {catalogNotice.added}. Обновлено: {catalogNotice.updated}. Пропущено:{" "}
+              {catalogNotice.skipped}.
+            </div>
+          ) : null}
         </div>
       </section>
 

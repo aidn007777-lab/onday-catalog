@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { demoAdminProducts, demoSuppliers } from "@/data/demoCatalog";
+import { demoSuppliers } from "@/data/demoCatalog";
+import { useDemoAdminProducts } from "@/features/catalog/demoCatalogStore";
 import { getLatestUpdate } from "./adminUtils";
 
 const quickActions = [
@@ -9,12 +12,13 @@ const quickActions = [
 ];
 
 export function AdminDashboard() {
-  const latestUpdate = getLatestUpdate(demoAdminProducts);
+  const products = useDemoAdminProducts();
+  const latestUpdate = getLatestUpdate(products);
 
   return (
     <div className="admin-stack">
       <section className="admin-metrics">
-        <MetricCard label="Товары" value={demoAdminProducts.length.toString()} note="Демо-каталог" />
+        <MetricCard label="Товары" value={products.length.toString()} note="Локальный демо-каталог" />
         <MetricCard label="Поставщики" value={demoSuppliers.length.toString()} note="Стартовый список" />
         <MetricCard label="Последнее обновление" value={latestUpdate} note="По демо-товарам" />
       </section>

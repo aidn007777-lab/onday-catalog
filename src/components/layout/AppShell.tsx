@@ -11,6 +11,11 @@ import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { demoProducts, demoWarehouses } from "@/data/demoCatalog";
+import {
+  getProductSimEac,
+  getPublicCatalogProducts,
+  useDemoAdminProducts
+} from "@/features/catalog/demoCatalogStore";
 import { getTranslation } from "@/lib/i18n/translations";
 import type { CategoryKey, Locale, Product, ThemeMode, ViewMode } from "@/types/catalog";
 import { getWarehouseLabel } from "@/components/catalog/catalogUtils";
@@ -23,22 +28,29 @@ export function AppShell() {
   const [category, setCategory] = useState<CategoryKey | "all">("all");
   const [brand, setBrand] = useState("all");
   const [warehouse, setWarehouse] = useState("all");
+  const [memory, setMemory] = useState("all");
+  const [color, setColor] = useState("all");
+  const [simEac, setSimEac] = useState("all");
   const [priceStatus, setPriceStatus] = useState("all");
   const [selectedProductId, setSelectedProductId] = useState(demoProducts[0].id);
   const [repeatWarningProductId, setRepeatWarningProductId] = useState<string | null>(null);
 
   const t = getTranslation(locale);
+  const adminProducts = useDemoAdminProducts();
+  const catalogProducts = useMemo(() => getPublicCatalogProducts(adminProducts), [adminProducts]);
 
   const filteredProducts = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
-    return demoProducts.filter((product) => {
+    return catalogProducts.filter((product) => {
       const warehouseLabel = getWarehouseLabel(product.warehouseId, demoWarehouses, locale);
+      const productColor = locale === "ru" ? product.colorRu : product.colorKz;
+      const productSimEac = getProductSimEac(product);
       const haystack = [
         product.brand,
         product.model,
         product.memory,
-        product.sim,
+        productSimEac,
         product.eac,
         product.colorRu,
         product.colorKz,
@@ -51,15 +63,19 @@ export function AppShell() {
         (category === "all" || product.category === category) &&
         (brand === "all" || product.brand === brand) &&
         (warehouse === "all" || product.warehouseId === warehouse) &&
+        (memory === "all" || product.memory === memory) &&
+        (color === "all" || productColor === color || product.colorRu === color || product.colorKz === color) &&
+        (simEac === "all" || productSimEac === simEac) &&
         (priceStatus === "all" || product.status === priceStatus) &&
         (normalizedSearch.length === 0 || haystack.includes(normalizedSearch))
       );
     });
-  }, [brand, category, locale, priceStatus, search, warehouse]);
+  }, [brand, catalogProducts, category, color, locale, memory, priceStatus, search, simEac, warehouse]);
 
   const selectedProduct =
     filteredProducts.find((product) => product.id === selectedProductId) ??
-    demoProducts.find((product) => product.id === selectedProductId) ??
+    catalogProducts.find((product) => product.id === selectedProductId) ??
+    catalogProducts[0] ??
     demoProducts[0];
 
   const sidebarItems = [
@@ -134,15 +150,21 @@ export function AppShell() {
           <CatalogFilters
             t={t}
             locale={locale}
-            products={demoProducts}
+            products={catalogProducts}
             warehouses={demoWarehouses}
             category={category}
             brand={brand}
             warehouse={warehouse}
+            memory={memory}
+            color={color}
+            simEac={simEac}
             priceStatus={priceStatus}
             onCategoryChange={setCategory}
             onBrandChange={setBrand}
             onWarehouseChange={setWarehouse}
+            onMemoryChange={setMemory}
+            onColorChange={setColor}
+            onSimEacChange={setSimEac}
             onPriceStatusChange={setPriceStatus}
           />
 

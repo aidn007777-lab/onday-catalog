@@ -14,7 +14,7 @@ export type CategoryKey =
   | "accessories"
   | "other";
 
-export type ProductStatus = "available" | "pricePending";
+export type ProductStatus = "available" | "outOfStock" | "pricePending";
 
 export type BankCode = "kaspi24" | "home24" | "halyk24";
 
@@ -33,6 +33,7 @@ export interface Product {
   model: string;
   memory: string;
   sim: string;
+  simEac?: string;
   eac: "да" | "нет" | "не определено";
   colorRu: string;
   colorKz: string;
@@ -54,5 +55,5 @@ export interface DemoSupplier {
 
 export interface AdminProduct extends Product {
   supplierName: string;
-  purchasePrice: number;
+  purchasePrice: number | null;
 }

@@ -969,6 +969,13 @@ button {
   padding: 16px;
 }
 
+.admin-product-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding: 16px;
+}
+
 .admin-field {
   display: grid;
   gap: 8px;
@@ -1101,6 +1108,7 @@ button {
 @media (max-width: 1100px) {
   .admin-metrics,
   .admin-actions,
+  .admin-product-filters,
   .admin-suppliers-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1119,6 +1127,7 @@ button {
   .admin-metrics,
   .admin-actions,
   .admin-form,
+  .admin-product-filters,
   .admin-suppliers-grid {
     grid-template-columns: minmax(0, 1fr);
   }
