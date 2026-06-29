@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -10,12 +10,8 @@ import { ProductDetails } from "@/components/catalog/ProductDetails";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { demoProducts, demoWarehouses } from "@/data/demoCatalog";
-import {
-  getProductSimEac,
-  getPublicCatalogProducts,
-  useDemoAdminProducts
-} from "@/features/catalog/demoCatalogStore";
+import { demoWarehouses } from "@/data/demoCatalog";
+import { getProductSimEac, useSupabasePublicProducts } from "@/features/catalog/supabaseCatalogStore";
 import { getTranslation } from "@/lib/i18n/translations";
 import type { CategoryKey, Locale, Product, ThemeMode, ViewMode } from "@/types/catalog";
 import { getWarehouseLabel } from "@/components/catalog/catalogUtils";
@@ -32,12 +28,11 @@ export function AppShell() {
   const [color, setColor] = useState("all");
   const [simEac, setSimEac] = useState("all");
   const [priceStatus, setPriceStatus] = useState("all");
-  const [selectedProductId, setSelectedProductId] = useState(demoProducts[0].id);
+  const [selectedProductId, setSelectedProductId] = useState("");
   const [repeatWarningProductId, setRepeatWarningProductId] = useState<string | null>(null);
 
   const t = getTranslation(locale);
-  const adminProducts = useDemoAdminProducts();
-  const catalogProducts = useMemo(() => getPublicCatalogProducts(adminProducts), [adminProducts]);
+  const { error: catalogError, loading: catalogLoading, products: catalogProducts } = useSupabasePublicProducts();
 
   const filteredProducts = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -76,7 +71,7 @@ export function AppShell() {
     filteredProducts.find((product) => product.id === selectedProductId) ??
     catalogProducts.find((product) => product.id === selectedProductId) ??
     catalogProducts[0] ??
-    demoProducts[0];
+    null;
 
   const sidebarItems = [
     { label: t.catalog, href: "/" },
@@ -95,7 +90,7 @@ export function AppShell() {
   }
 
   function handleOrderClick() {
-    if (selectedProduct.hasActiveOrder) {
+    if (selectedProduct?.hasActiveOrder) {
       setRepeatWarningProductId(selectedProduct.id);
     }
   }
@@ -147,6 +142,8 @@ export function AppShell() {
         </header>
 
         <div className="content">
+          {catalogError ? <div className="admin-notice">{catalogError}</div> : null}
+
           <CatalogFilters
             t={t}
             locale={locale}
@@ -175,7 +172,7 @@ export function AppShell() {
                   <div>
                     <h1 className="panel-title">{t.catalog}</h1>
                     <p className="panel-subtitle">
-                      {filteredProducts.length} · {t.publicWarehouse}: Тараз / Алматы
+                      {catalogLoading ? "Загрузка из Supabase..." : `${filteredProducts.length} · ${t.publicWarehouse}: Тараз / Алматы`}
                     </p>
                   </div>
 
@@ -198,7 +195,7 @@ export function AppShell() {
                     locale={locale}
                     products={filteredProducts}
                     warehouses={demoWarehouses}
-                    selectedProductId={selectedProduct.id}
+                    selectedProductId={selectedProduct?.id ?? ""}
                     onSelect={handleSelect}
                   />
                   <div className="table-mobile-fallback">
@@ -207,7 +204,7 @@ export function AppShell() {
                       locale={locale}
                       products={filteredProducts}
                       warehouses={demoWarehouses}
-                      selectedProductId={selectedProduct.id}
+                      selectedProductId={selectedProduct?.id ?? ""}
                       onSelect={handleSelect}
                     />
                   </div>
@@ -218,23 +215,32 @@ export function AppShell() {
                   locale={locale}
                   products={filteredProducts}
                   warehouses={demoWarehouses}
-                  selectedProductId={selectedProduct.id}
+                  selectedProductId={selectedProduct?.id ?? ""}
                   onSelect={handleSelect}
                 />
               )}
             </section>
 
-            <ProductDetails
-              t={t}
-              locale={locale}
-              product={selectedProduct}
-              warehouses={demoWarehouses}
-              showRepeatWarning={repeatWarningProductId === selectedProduct.id}
-              onOrderClick={handleOrderClick}
-            />
+            {selectedProduct ? (
+              <ProductDetails
+                t={t}
+                locale={locale}
+                product={selectedProduct}
+                warehouses={demoWarehouses}
+                showRepeatWarning={repeatWarningProductId === selectedProduct.id}
+                onOrderClick={handleOrderClick}
+              />
+            ) : (
+              <aside className="surface details-panel">
+                <div className="admin-empty-state">
+                  {catalogLoading ? "Загрузка товаров из Supabase..." : "В каталоге пока нет товаров."}
+                </div>
+              </aside>
+            )}
           </div>
         </div>
       </section>
     </main>
   );
 }
+

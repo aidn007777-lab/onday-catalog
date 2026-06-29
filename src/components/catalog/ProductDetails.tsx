@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/Badge";
-import { getProductSimEac } from "@/features/catalog/demoCatalogStore";
+﻿import { Badge } from "@/components/ui/Badge";
+import { getProductSimEac } from "@/features/catalog/supabaseCatalogStore";
 import type { Locale, Product, Warehouse } from "@/types/catalog";
 import type { Translation } from "@/lib/i18n/translations";
 import { formatPrice, getWarehouseLabel } from "./catalogUtils";
@@ -125,3 +125,4 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

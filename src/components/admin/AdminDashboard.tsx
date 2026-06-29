@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { demoSuppliers } from "@/data/demoCatalog";
-import { useDemoAdminProducts } from "@/features/catalog/demoCatalogStore";
+import { useSupabaseAdminProducts } from "@/features/catalog/supabaseCatalogStore";
 import { getLatestUpdate } from "./adminUtils";
 
 const quickActions = [
@@ -12,22 +12,24 @@ const quickActions = [
 ];
 
 export function AdminDashboard() {
-  const products = useDemoAdminProducts();
+  const { error, loading, products } = useSupabaseAdminProducts();
   const latestUpdate = getLatestUpdate(products);
 
   return (
     <div className="admin-stack">
+      {error ? <div className="admin-notice">{error}</div> : null}
+
       <section className="admin-metrics">
-        <MetricCard label="Товары" value={products.length.toString()} note="Локальный демо-каталог" />
+        <MetricCard label="Товары" value={loading ? "..." : products.length.toString()} note="Supabase products" />
         <MetricCard label="Поставщики" value={demoSuppliers.length.toString()} note="Стартовый список" />
-        <MetricCard label="Последнее обновление" value={latestUpdate} note="По демо-товарам" />
+        <MetricCard label="Последнее обновление" value={loading ? "..." : latestUpdate} note="По товарам Supabase" />
       </section>
 
       <section className="surface">
         <div className="panel-header">
           <div>
             <h2 className="panel-title">Быстрые действия</h2>
-            <p className="panel-subtitle">Интерфейс подготовлен без сохранения в базу данных</p>
+            <p className="panel-subtitle">Каталог подключён к таблице products в Supabase</p>
           </div>
         </div>
         <div className="admin-actions">
@@ -51,3 +53,4 @@ function MetricCard({ label, value, note }: { label: string; value: string; note
     </article>
   );
 }
+

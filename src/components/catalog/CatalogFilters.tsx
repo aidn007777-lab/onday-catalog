@@ -1,6 +1,6 @@
-import type { CategoryKey, Locale, Product, Warehouse } from "@/types/catalog";
+﻿import type { CategoryKey, Locale, Product, Warehouse } from "@/types/catalog";
 import type { Translation } from "@/lib/i18n/translations";
-import { getProductSimEac } from "@/features/catalog/demoCatalogStore";
+import { getProductSimEac } from "@/features/catalog/supabaseCatalogStore";
 
 interface CatalogFiltersProps {
   t: Translation;
@@ -151,3 +151,4 @@ export function CatalogFilters({
     </section>
   );
 }
+

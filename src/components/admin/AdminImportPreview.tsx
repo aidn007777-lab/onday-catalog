@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { demoSuppliers } from "@/data/demoCatalog";
-import { upsertParsedCatalogRows, type CatalogUpsertResult } from "@/features/catalog/demoCatalogStore";
+import { upsertParsedCatalogRows, type CatalogUpsertResult } from "@/features/catalog/supabaseCatalogStore";
 import { formatAdminPrice } from "./adminUtils";
 import { parseWhatsappPriceList } from "./demoWhatsappParser";
 
@@ -25,6 +25,8 @@ export function AdminImportPreview() {
   const [checked, setChecked] = useState(false);
   const [copyNotice, setCopyNotice] = useState("");
   const [catalogNotice, setCatalogNotice] = useState<CatalogUpsertResult | null>(null);
+  const [catalogError, setCatalogError] = useState("");
+  const [savingCatalog, setSavingCatalog] = useState(false);
 
   const selectedSupplier = demoSuppliers.find((supplier) => supplier.id === supplierId) ?? demoSuppliers[0];
   const parseResult = useMemo(
@@ -72,14 +74,24 @@ export function AdminImportPreview() {
     }
   }
 
-  function handleAddToCatalog() {
+  async function handleAddToCatalog() {
     if (!parseResult || parseResult.rows.length === 0) {
       return;
     }
 
-    const result = upsertParsedCatalogRows(parseResult.rows, selectedSupplier.name);
-    setCatalogNotice(result);
+    setCatalogError("");
+    setCatalogNotice(null);
+    setSavingCatalog(true);
     setCopyNotice("");
+
+    try {
+      const result = await upsertParsedCatalogRows(parseResult.rows, selectedSupplier.name);
+      setCatalogNotice(result);
+    } catch (error) {
+      setCatalogError(error instanceof Error ? error.message : "Не удалось сохранить товары в Supabase.");
+    } finally {
+      setSavingCatalog(false);
+    }
   }
 
   return (
@@ -101,6 +113,7 @@ export function AdminImportPreview() {
                 setSupplierId(event.target.value);
                 setCopyNotice("");
                 setCatalogNotice(null);
+                setCatalogError("");
               }}
             >
               {demoSuppliers.map((supplier) => (
@@ -120,6 +133,7 @@ export function AdminImportPreview() {
                 setChecked(false);
                 setCopyNotice("");
                 setCatalogNotice(null);
+                setCatalogError("");
               }}
             />
           </label>
@@ -131,6 +145,7 @@ export function AdminImportPreview() {
               setChecked(true);
               setCopyNotice("");
               setCatalogNotice(null);
+              setCatalogError("");
             }}
           >
             Проверить
@@ -144,6 +159,7 @@ export function AdminImportPreview() {
               setChecked(false);
               setCopyNotice("");
               setCatalogNotice(null);
+              setCatalogError("");
             }}
           >
             Очистить
@@ -151,8 +167,13 @@ export function AdminImportPreview() {
 
           {parseResult && parseResult.rows.length > 0 ? (
             <>
-              <button className="primary-button admin-submit" type="button" onClick={handleAddToCatalog}>
-                Добавить в каталог
+              <button
+                className="primary-button admin-submit"
+                type="button"
+                disabled={savingCatalog}
+                onClick={handleAddToCatalog}
+              >
+                {savingCatalog ? "Сохранение..." : "Добавить в каталог"}
               </button>
 
               <button className="ghost-button admin-submit" type="button" onClick={handleCopyResult}>
@@ -162,9 +183,10 @@ export function AdminImportPreview() {
           ) : null}
 
           {copyNotice ? <div className="admin-notice">{copyNotice}</div> : null}
+          {catalogError ? <div className="admin-notice">{catalogError}</div> : null}
           {catalogNotice ? (
             <div className="admin-notice" role="status">
-              Добавлено: {catalogNotice.added}. Обновлено: {catalogNotice.updated}. Пропущено:{" "}
+              Сохранено в Supabase. Добавлено: {catalogNotice.added}. Обновлено: {catalogNotice.updated}. Пропущено:{" "}
               {catalogNotice.skipped}.
             </div>
           ) : null}
@@ -268,3 +290,4 @@ function ImportMetric({ label, value }: { label: string; value: number }) {
     </article>
   );
 }
+

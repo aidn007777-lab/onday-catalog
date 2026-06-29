@@ -1,18 +1,18 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import {
   getProductSimEac,
   sortAdminProducts,
-  useDemoAdminProducts
-} from "@/features/catalog/demoCatalogStore";
+  useSupabaseAdminProducts
+} from "@/features/catalog/supabaseCatalogStore";
 import type { CategoryKey, ProductStatus } from "@/types/catalog";
 import { categoryLabels, formatAdminPrice, statusLabels } from "./adminUtils";
 
 const allOption = "all";
 
 export function AdminProductsTable() {
-  const products = useDemoAdminProducts();
+  const { error, loading, products } = useSupabaseAdminProducts();
   const [search, setSearch] = useState("");
   const [supplier, setSupplier] = useState(allOption);
   const [category, setCategory] = useState<CategoryKey | typeof allOption>(allOption);
@@ -72,9 +72,11 @@ export function AdminProductsTable() {
         <div className="panel-header">
           <div>
             <h2 className="panel-title">Фильтры каталога</h2>
-            <p className="panel-subtitle">Поиск по всем локальным позициям без подключения базы данных</p>
+            <p className="panel-subtitle">Поиск по всем позициям из Supabase products</p>
           </div>
         </div>
+
+        {error ? <div className="admin-notice">{error}</div> : null}
 
         <div className="admin-product-filters">
           <label className="admin-field admin-field-wide">
@@ -113,7 +115,9 @@ export function AdminProductsTable() {
           <div>
             <h2 className="panel-title">Таблица товаров</h2>
             <p className="panel-subtitle">
-              Показано {filteredProducts.length} из {products.length}. Админка видит все предложения поставщиков.
+              {loading
+                ? "Загрузка товаров из Supabase..."
+                : `Показано ${filteredProducts.length} из ${products.length}. Админка видит все предложения поставщиков.`}
             </p>
           </div>
         </div>
@@ -157,7 +161,11 @@ export function AdminProductsTable() {
           </table>
         </div>
 
-        {filteredProducts.length === 0 ? <div className="admin-empty-state">По этим фильтрам товаров нет.</div> : null}
+        {filteredProducts.length === 0 ? (
+          <div className="admin-empty-state">
+            {loading ? "Загрузка товаров из Supabase..." : "По этим фильтрам товаров нет."}
+          </div>
+        ) : null}
       </section>
     </div>
   );
@@ -194,3 +202,4 @@ function FilterSelect({
 function getSortedOptions(values: string[]) {
   return Array.from(new Set(values)).sort((left, right) => left.localeCompare(right, "ru"));
 }
+
